@@ -18,3 +18,6 @@
 /src/NuGetReferenceSwitcher.VS13.sln.GhostDoc.xml
 /src/NuGetReferenceSwitcher.VS14.sln.GhostDoc.xml
 /src/NuGetReferenceSwitcher.VS12old
+/.vs/VSWorkspaceState.json
+/.vs/slnx.sqlite
+/.vs/ProjectSettings.json

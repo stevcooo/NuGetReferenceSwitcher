@@ -93,7 +93,7 @@ namespace NuGetReferenceSwitcher.Presentation.Views
                 _dlg.Filter = "CSharp Projects (*.csproj)|*.csproj|VB.NET Projects (*.vbproj)|*.vbproj";
 
                 // switch to VB if any VB project is already referenced
-                if (Model.Transformations.Any(t => t.ToProjectPath != null && t.ToProjectPath.EndsWith(".vbproj", System.StringComparison.OrdinalIgnoreCase)))
+                if (Model.FilteredTransformations.Any(t => t.ToProjectPath != null && t.ToProjectPath.EndsWith(".vbproj", System.StringComparison.OrdinalIgnoreCase)))
                     _dlg.FilterIndex = 2;
             }
 
@@ -101,6 +101,12 @@ namespace NuGetReferenceSwitcher.Presentation.Views
 
             if (_dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 fntpSwitch.ToProjectPath = _dlg.FileName;
+        }
+
+        private void FilterNugetPackages(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            var searchText = ((System.Windows.Controls.TextBox)sender).Text;
+            Model.FilterTransofrmations(searchText);
         }
     }
 }

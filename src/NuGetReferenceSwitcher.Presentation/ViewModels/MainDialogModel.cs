@@ -28,11 +28,14 @@ namespace NuGetReferenceSwitcher.Presentation.ViewModels
     public class MainDialogModel : ViewModelBase
     {
         private Assembly _extensionAssembly;
+        private ExtendedObservableCollection<FromNuGetToProjectTransformation> _transformations;
+        private ExtendedObservableCollection<FromNuGetToProjectTransformation> _filteredTransformations;
 
         public MainDialogModel()
         {
             Projects = new ExtendedObservableCollection<ProjectModel>();
-            Transformations = new ExtendedObservableCollection<FromNuGetToProjectTransformation>();
+            _transformations = new ExtendedObservableCollection<FromNuGetToProjectTransformation>();
+            FilteredTransformations = new ExtendedObservableCollection<FromNuGetToProjectTransformation>();
 
             RemoveProjects = true;
             SaveProjects = true;
@@ -42,7 +45,15 @@ namespace NuGetReferenceSwitcher.Presentation.ViewModels
         public ExtendedObservableCollection<ProjectModel> Projects { get; private set; }
 
         /// <summary>Gets the NuGet to project switches which are shown in the first tab. </summary>
-        public ExtendedObservableCollection<FromNuGetToProjectTransformation> Transformations { get; private set; }
+        public ExtendedObservableCollection<FromNuGetToProjectTransformation> FilteredTransformations
+        {
+            get { return _filteredTransformations; }
+            private set
+            {
+                _filteredTransformations = value;
+                RaisePropertyChanged(() => FilteredTransformations);
+            }
+        }
 
         /// <summary>Gets or sets a value indicating whether the changed projects should be saved. </summary>
         public bool SaveProjects { get; set; }
@@ -88,11 +99,12 @@ namespace NuGetReferenceSwitcher.Presentation.ViewModels
             }, token));
 
             Projects.Initialize(projects);
-            Transformations.Initialize(projects
+            _transformations.Initialize(projects
                 .SelectMany(p => p.NuGetReferences)
                 .GroupBy(r => r.Name)
                 .Select(g => new FromNuGetToProjectTransformation(projects, g.First()))
                 .OrderBy(s => s.FromAssemblyName));
+            FilteredTransformations.Initialize(_transformations);
         }
 
         /// <summary>Switches the NuGet DLL references to the selected project references. </summary>
@@ -102,7 +114,7 @@ namespace NuGetReferenceSwitcher.Presentation.ViewModels
             await RunTaskAsync(token => Task.Run(() =>
             {
                 // first, add all required projects
-                var activeTransformations = Transformations
+                var activeTransformations = _transformations
                     .Where(p => p.SelectedMode != NuGetToProjectMode.Deactivated)
                     .ToList();
 
@@ -198,6 +210,13 @@ namespace NuGetReferenceSwitcher.Presentation.ViewModels
 
                 RemoveProjectsFromSolution(projectsToRemove);
             }, token));
+        }
+        
+        /// <summary>Shows only transformations that contains searchText in their Assembly name. </summary>
+        internal void FilterTransofrmations(string searchText)
+        {
+            FilteredTransformations.Initialize(_transformations
+                .Where(t => t.FromAssemblyName.ToLowerInvariant().Contains(searchText.ToLowerInvariant())));
         }
 
         private List<ProjectModel> GetAllProjects(IEnumerable<Project> objects)
